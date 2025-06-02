@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.JavaScript;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Net.Http;
 using System.Threading.Tasks;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Webp;
+using SixLabors.ImageSharp.PixelFormats;
 
 Console.WriteLine("Hello World");
 
@@ -73,10 +77,10 @@ public partial class Program
             sw.Stop();
             Console.WriteLine($"Browser decode via .NET failed: {ex.Message}");
         }
-    }    [JSImport("globalThis.performBrowserImageDecode")]
-    internal static partial Task<string> CallJavaScriptDecoder(string imageUrl);
+    }
 
-    [JSExport]
+    [JSImport("globalThis.performBrowserImageDecode")]
+    internal static partial Task<string> CallJavaScriptDecoder(string imageUrl);    [JSExport]
     internal static async Task DecodeWebPWithDotNet(string imageUrl)
     {
         var sw = Stopwatch.StartNew();
@@ -93,31 +97,28 @@ public partial class Program
 
             Console.WriteLine($"Downloaded {imageBytes.Length} bytes in {downloadStart.ElapsedMilliseconds}ms");
 
-            // Simulate WebP decoding processing
-            // In a real implementation, you would parse the WebP header and decode the image
+            // Actually decode the WebP image using ImageSharp
             var processingStart = Stopwatch.StartNew();
 
-            // Basic WebP header validation (simple check)
-            bool isValidWebP = imageBytes.Length > 12 &&
-                              imageBytes[0] == 'R' && imageBytes[1] == 'I' &&
-                              imageBytes[2] == 'F' && imageBytes[3] == 'F' &&
-                              imageBytes[8] == 'W' && imageBytes[9] == 'E' &&
-                              imageBytes[10] == 'B' && imageBytes[11] == 'P';
-
-            if (!isValidWebP)
-            {
-                throw new InvalidOperationException("Invalid WebP file format");
-            }
-
-            // Simulate decoding work
-            await Task.Delay(50);
+            using var memoryStream = new MemoryStream(imageBytes);
+            using var image = await Image.LoadAsync<Rgba32>(memoryStream);
+            
+            // Get image information
+            var width = image.Width;
+            var height = image.Height;
+            var pixelCount = width * height;
+            
+            // Access pixel data to ensure full decoding
+            var pixelData = new Rgba32[pixelCount];
+            image.CopyPixelDataTo(pixelData);
+            
             processingStart.Stop();
 
             sw.Stop();
             var totalTime = sw.ElapsedMilliseconds;
 
             Console.WriteLine($".NET WASM decode completed in {totalTime}ms (download: {downloadStart.ElapsedMilliseconds}ms, processing: {processingStart.ElapsedMilliseconds}ms)");
-            Console.WriteLine($"Image file size: {imageBytes.Length} bytes - Valid WebP: {isValidWebP}");
+            Console.WriteLine($"Image decoded: {width}x{height} pixels ({pixelCount} total pixels, {pixelData.Length * 4} RGBA bytes)");
 
         }
         catch (Exception ex)
