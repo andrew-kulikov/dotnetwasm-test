@@ -1,28 +1,13 @@
 // Import required runtime
 import { dotnet } from './_framework/dotnet.js'
 
-// Initialize the .NET runtime
-const { getAssemblyExports, getConfig, runMain } = await dotnet
-    .withDiagnosticTracing(false)
-    .create();
-
-// Get exports from our assembly
-const config = getConfig();
-console.log('Config:', config);
-const exports = await getAssemblyExports(config.mainAssemblyName);
-
-console.log('WASM module loaded successfully!');
-
-function getRandomInt(max) {
-    return Math.floor(Math.random() * max);
-}
-
-// Browser-side WebP decoding
-async function decodeBrowserWebP(imageUrl) {
+// Helper function called by .NET to perform actual browser image decoding
+// Define this BEFORE initializing .NET runtime
+globalThis.performBrowserImageDecode = async function(imageUrl) {
     const startTime = performance.now();
     
     try {
-        console.log(`Starting browser decode of: ${imageUrl}`);
+        console.log(`JavaScript: Starting browser decode of: ${imageUrl}`);
         
         // Create virtual image element
         const img = new Image();
@@ -35,7 +20,7 @@ async function decodeBrowserWebP(imageUrl) {
             img.src = imageUrl;
         });
         
-        console.log(`Image loaded: ${img.width}x${img.height}`);
+        console.log(`JavaScript: Image loaded: ${img.width}x${img.height}`);
         
         // Create virtual canvas
         const canvas = document.createElement('canvas');
@@ -53,25 +38,42 @@ async function decodeBrowserWebP(imageUrl) {
         const endTime = performance.now();
         const duration = endTime - startTime;
         
-        console.log(`Browser decode completed in ${duration.toFixed(2)}ms`);
-        console.log(`Image data size: ${bytes.length} bytes (${canvas.width}x${canvas.height}x4)`);
+        console.log(`JavaScript: Browser decode completed in ${duration.toFixed(2)}ms`);
+        console.log(`JavaScript: Image data size: ${bytes.length} bytes (${canvas.width}x${canvas.height}x4)`);
         
         document.getElementById('browserResult').innerHTML = 
-            `<strong>Browser Runtime:</strong> ${duration.toFixed(2)}ms - ${canvas.width}x${canvas.height} - ${bytes.length} bytes`;
+            `<strong>Browser Runtime (via .NET):</strong> ${duration.toFixed(2)}ms - ${canvas.width}x${canvas.height} - ${bytes.length} bytes`;
         
-        return {
-            width: canvas.width,
-            height: canvas.height,
-            duration: duration,
-            dataSize: bytes.length
-        };
+        return `${duration.toFixed(2)}ms - ${canvas.width}x${canvas.height} - ${bytes.length} bytes`;
         
     } catch (error) {
-        console.error('Browser decode failed:', error);
+        console.error('JavaScript: Browser decode failed:', error);
         document.getElementById('browserResult').innerHTML = 
-            `<strong>Browser Runtime:</strong> Failed - ${error.message}`;
-        throw error;
+            `<strong>Browser Runtime (via .NET):</strong> Failed - ${error.message}`;
+        return `Failed - ${error.message}`;
     }
+}
+
+// Initialize the .NET runtime
+const { getAssemblyExports, getConfig, runMain } = await dotnet
+    .withDiagnosticTracing(false)
+    .create();
+
+// Get exports from our assembly
+const config = getConfig();
+console.log('Config:', config);
+const exports = await getAssemblyExports(config.mainAssemblyName);
+
+console.log('WASM module loaded successfully!');
+
+function getRandomInt(max) {
+    return Math.floor(Math.random() * max);
+}
+
+// Browser-side WebP decoding (now calls into .NET first)
+async function decodeBrowserWebP(imageUrl) {
+    console.log(`Calling .NET to coordinate browser decode of: ${imageUrl}`);
+    await exports.Program.DecodeBrowserWebPViaDotNet(imageUrl);
 }
 
 // Set up event handlers

@@ -35,7 +35,7 @@ public partial class Program
         Console.WriteLine($"Hello from dotnet");
     }
 
-[JSExport]
+    [JSExport]
     internal static void GetSum(string data)
     {
         var sw = Stopwatch.StartNew();
@@ -51,48 +51,74 @@ public partial class Program
     }
 
     [JSExport]
+    internal static async Task DecodeBrowserWebPViaDotNet(string imageUrl)
+    {
+        var sw = Stopwatch.StartNew();
+        try
+        {
+            Console.WriteLine($"Starting browser decode via .NET: {imageUrl}");
+
+            // Call JavaScript to perform the actual browser-based decoding
+            var result = await CallJavaScriptDecoder(imageUrl);
+
+            sw.Stop();
+            var totalTime = sw.ElapsedMilliseconds;
+
+            Console.WriteLine($"Browser decode via .NET completed in {totalTime}ms");
+            Console.WriteLine($"Result: {result}");
+
+        }
+        catch (Exception ex)
+        {
+            sw.Stop();
+            Console.WriteLine($"Browser decode via .NET failed: {ex.Message}");
+        }
+    }    [JSImport("globalThis.performBrowserImageDecode")]
+    internal static partial Task<string> CallJavaScriptDecoder(string imageUrl);
+
+    [JSExport]
     internal static async Task DecodeWebPWithDotNet(string imageUrl)
     {
         var sw = Stopwatch.StartNew();
         try
         {
             Console.WriteLine($"Starting .NET WASM decode of: {imageUrl}");
-            
+
             // Download the WebP image
             var downloadStart = Stopwatch.StartNew();
             var response = await httpClient.GetAsync(imageUrl);
             response.EnsureSuccessStatusCode();
             var imageBytes = await response.Content.ReadAsByteArrayAsync();
             downloadStart.Stop();
-            
+
             Console.WriteLine($"Downloaded {imageBytes.Length} bytes in {downloadStart.ElapsedMilliseconds}ms");
-            
+
             // Simulate WebP decoding processing
             // In a real implementation, you would parse the WebP header and decode the image
             var processingStart = Stopwatch.StartNew();
-            
+
             // Basic WebP header validation (simple check)
-            bool isValidWebP = imageBytes.Length > 12 && 
-                              imageBytes[0] == 'R' && imageBytes[1] == 'I' && 
+            bool isValidWebP = imageBytes.Length > 12 &&
+                              imageBytes[0] == 'R' && imageBytes[1] == 'I' &&
                               imageBytes[2] == 'F' && imageBytes[3] == 'F' &&
                               imageBytes[8] == 'W' && imageBytes[9] == 'E' &&
                               imageBytes[10] == 'B' && imageBytes[11] == 'P';
-            
+
             if (!isValidWebP)
             {
                 throw new InvalidOperationException("Invalid WebP file format");
             }
-            
+
             // Simulate decoding work
             await Task.Delay(50);
             processingStart.Stop();
-            
+
             sw.Stop();
             var totalTime = sw.ElapsedMilliseconds;
-            
+
             Console.WriteLine($".NET WASM decode completed in {totalTime}ms (download: {downloadStart.ElapsedMilliseconds}ms, processing: {processingStart.ElapsedMilliseconds}ms)");
             Console.WriteLine($"Image file size: {imageBytes.Length} bytes - Valid WebP: {isValidWebP}");
-            
+
         }
         catch (Exception ex)
         {
