@@ -1,42 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>.NET WebAssembly App</title>
 </head>
+
 <body>
     <h1>.NET 9 WebAssembly Application</h1>
     <p>WebP Image Decoding Performance Comparison</p>
     <p>Please check the browser console to see the results.</p>
-    
+
     <div style="margin: 20px 0;">
         <h3>WebP Image URL:</h3>
-        <input type="text" id="webpUrl" style="width: 500px;" 
-               value="http://localhost:8000/1.webp" 
-               placeholder="Enter WebP image URL">
+        <input type="text" id="webpUrl" style="width: 500px;" value="http://localhost:8000/1.webp"
+            placeholder="Enter WebP image URL">
     </div>
-    
-    <div style="margin: 20px 0;">        <button id="browserDecodeBtn" style="margin: 10px; padding: 10px 20px; background: #007acc; color: white; border: none; border-radius: 5px;">
+
+    <div style="margin: 20px 0;"> <button id="browserDecodeBtn"
+            style="margin: 10px; padding: 10px 20px; background: #007acc; color: white; border: none; border-radius: 5px;">
             Decode with Browser Runtime (via .NET)
         </button>
-        
-        <button id="wasmDecodeBtn" style="margin: 10px; padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px;">
+
+        <button id="wasmDecodeBtn"
+            style="margin: 10px; padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px;">
             Decode with .NET WASM
         </button>
-        
-        <button id="helloBtn" style="margin: 10px; padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 5px;">
+
+        <button id="wasmLibwebpDecodeBtn"
+            style="margin: 10px; padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px;">
+            Decode with .NET WASM (libwebp)
+        </button>
+
+        <button id="helloBtn"
+            style="margin: 10px; padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 5px;">
             Test Sum (Original)
         </button>
     </div>
-    
+
     <div id="results" style="margin: 20px 0; padding: 10px; background: #f8f9fa; border-radius: 5px;">
         <h3>Results will appear here:</h3>
         <div id="browserResult"></div>
         <div id="wasmResult"></div>
     </div>
-    
+
     <!-- Load the dotnet.js file which needs to be located alongside the wasm files -->
     <script type="module" src="main.js"></script>
 </body>
+
 </html>
